@@ -9,6 +9,8 @@ import org.apache.beam.sdk.io.FileBasedSource;
 import org.apache.beam.sdk.io.fs.MatchResult;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.ValueProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -17,10 +19,9 @@ import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.util.NoSuchElementException;
 
-/**
- * Created by orian on 26.05.17.
- */
 public class ProtoIOSource<T extends Message> extends FileBasedSource<T> implements Serializable {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ProtoIOSource.class);
 
     private final Class<T> protoMessageClass;
     private static final int DEFAULT_MIN_BUNDLE_SIZE = 1024;
@@ -52,6 +53,7 @@ public class ProtoIOSource<T extends Message> extends FileBasedSource<T> impleme
 
     @Override
     protected FileBasedSource<T> createForSubrangeOfFile(MatchResult.Metadata fileMetadata, long start, long end) {
+        LOG.error("source for subrange for subrange: "+start+" " + end);
         return new ProtoIOSource<T>(protoMessageClass, fileMetadata, DEFAULT_MIN_BUNDLE_SIZE, start, end);
     }
 
@@ -62,7 +64,8 @@ public class ProtoIOSource<T extends Message> extends FileBasedSource<T> impleme
 
     @Override
     protected boolean isSplittable() throws Exception {
-        return false;
+//        LOG.info("isSplittable");
+        return getMode()==Mode.FILEPATTERN;
     }
 
     @Override
@@ -121,7 +124,7 @@ public class ProtoIOSource<T extends Message> extends FileBasedSource<T> impleme
         @Override
         protected long getCurrentOffset() throws NoSuchElementException {
             // TODO find a way to get a real consumed bytes.
-            return this.realOffset ? currentOffset : this.readNum;
+            return currentOffset;
         }
 
         @Override
@@ -140,7 +143,7 @@ public class ProtoIOSource<T extends Message> extends FileBasedSource<T> impleme
 
         @Override
         public boolean allowsDynamicSplitting() {
-            return true;
+            return false;
         }
     }
 }

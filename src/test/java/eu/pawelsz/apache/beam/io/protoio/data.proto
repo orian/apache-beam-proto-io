@@ -1,0 +1,12 @@
+syntax = "proto2";
+
+package protoio;
+option java_package = "eu.pawelsz.apache.beam.io.protoio";
+
+message RawItem {
+    optional int64 timestamp_usec = 1;
+    optional string device_name = 2;
+    optional bytes mac_address = 3;
+    optional int32 signal_strength = 4;
+
+}

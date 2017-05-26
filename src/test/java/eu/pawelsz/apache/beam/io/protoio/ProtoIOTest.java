@@ -6,6 +6,7 @@ import org.apache.beam.sdk.io.Read;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.testing.NeedsRunner;
 import org.apache.beam.sdk.testing.TestPipeline;
+import org.apache.beam.sdk.transforms.Count;
 import org.apache.beam.sdk.util.SerializableUtils;
 import org.apache.beam.sdk.values.PCollection;
 import org.junit.Before;
@@ -20,7 +21,7 @@ import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 
 public class ProtoIOTest {
-    static String testFilePath = "src/test/java/eu/pawelsz/apache/beam/io/protoio/test.pb.bin";
+    static String testFilePath = "src/test/java/eu/pawelsz/apache/beam/io/protoio/test-*.pb.bin";
 
     @Rule
     public final transient TestPipeline pipeline = TestPipeline.create();

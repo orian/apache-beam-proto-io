@@ -3,16 +3,20 @@ package eu.pawelsz.apache.beam.io.protoio;
 import org.apache.beam.runners.direct.DirectRunner;
 import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.io.CompressedSource;
+import org.apache.beam.sdk.io.FileSystemRegistrar;
+import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 //import org.apache.beam.sdk.util.IOChannelUtils;
 import org.apache.beam.sdk.util.SerializableUtils;
+import org.apache.beam.sdk.util.common.ReflectHelpers;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.ServiceLoader;
 
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
@@ -29,15 +33,16 @@ public class ProtoIOCloudStorageTest {
   public static void setUpClass() {
     opts = PipelineOptionsFactory.create();
     opts.setRunner(DirectRunner.class);
+    FileSystems.setDefaultPipelineOptions(opts);
+//    ServiceLoader.load(FileSystemRegistrar.class, ReflectHelpers.findClassLoader());
+
 //    IOChannelUtils.registerIOFactories(opts);
   }
 
   @Before
   public void setUp() {
 //    opts = PipelineOptionsFactory.create();
-//    IOChannelUtils.registerIOFactories(opts);
-    opts = PipelineOptionsFactory.create();
-    opts.setRunner(DirectRunner.class);
+//    opts.setRunner(DirectRunner.class);
     source = ProtoIOSource.from(Data.RawItem.class, testFilePath);
   }
 

@@ -77,16 +77,4 @@ public class ProtoIO {
             FileBasedSink.WritableByteChannelFactory factory) {
         return WriteFiles.to(sink(baseOutputFilename, extension, factory));
     }
-
-    public static class FileDesc implements Serializable {
-        private final String name;  // path to file
-        private final long offset;  // where to start the read
-        private final long len;     // where to finish, -1 for the EOF
-
-        public FileDesc(String name, long offset, long len) {
-            this.name = name;
-            this.offset = offset;
-            this.len = len;
-        }
-    }
 }
