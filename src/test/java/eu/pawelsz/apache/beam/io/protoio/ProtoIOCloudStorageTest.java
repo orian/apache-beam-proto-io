@@ -10,10 +10,8 @@ import org.apache.beam.sdk.util.SerializableUtils;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import eu.pawelsz.apache.beam.io.protoio.Data;
 
 import java.io.IOException;
-import java.util.LinkedList;
 import java.util.List;
 
 import static junit.framework.TestCase.assertEquals;
@@ -40,7 +38,7 @@ public class ProtoIOCloudStorageTest {
 //    IOChannelUtils.registerIOFactories(opts);
     opts = PipelineOptionsFactory.create();
     opts.setRunner(DirectRunner.class);
-    source = ProtoIO.Source.from(Data.RawItem.class, testFilePath);
+    source = ProtoIOSource.from(Data.RawItem.class, testFilePath);
   }
 
   @Test
@@ -73,8 +71,8 @@ public class ProtoIOCloudStorageTest {
   @Test
   public void testReadManyFiles() throws Exception {
     final int mul = 2;
-    ProtoIO.Source<Data.RawItem> localSource =
-        ProtoIO.Source.from(Data.RawItem.class, "gs://datainq-dev/testdata/sharded_binary/test.pb.bin-*");
+    ProtoIOSource<Data.RawItem> localSource =
+        ProtoIOSource.from(Data.RawItem.class, "gs://datainq-dev/testdata/sharded_binary/test.pb.bin-*");
 
     assertEquals(390*mul, localSource.getEstimatedSizeBytes(opts));
 
@@ -111,7 +109,7 @@ public class ProtoIOCloudStorageTest {
 
   @Test
   public void testReadRecordsGzip() throws Exception {
-    source = CompressedSource.from(ProtoIO.Source.from(Data.RawItem.class, testFilePathGz));
+    source = CompressedSource.from(ProtoIOSource.from(Data.RawItem.class, testFilePathGz));
 
     BoundedSource.BoundedReader<Data.RawItem> reader = source.createReader(opts);
     assertTrue("must read 0", reader.start()); // start reading
@@ -131,7 +129,7 @@ public class ProtoIOCloudStorageTest {
   @Test
   public void testReadCompressed() throws Exception {
     source = CompressedSource.from(
-        ProtoIO.Source.from(
+        ProtoIOSource.from(
             Data.RawItem.class,
             "gs://datainq-dev/testdata/single_gz/test.pb.gz-00001-of-00002"))
         .withDecompression(CompressedSource.CompressionMode.GZIP);

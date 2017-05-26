@@ -2,12 +2,18 @@ package eu.pawelsz.apache.beam.io.protoio;
 
 import org.apache.beam.sdk.io.DefaultFilenamePolicy;
 import org.apache.beam.sdk.io.FileBasedSink;
+import org.apache.beam.sdk.io.FileSystems;
+import org.apache.beam.sdk.io.Read;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.options.PipelineOptions;
-import eu.pawelsz.apache.beam.io.protoio.Data;
 import org.apache.beam.sdk.options.ValueProvider;
+import org.apache.beam.sdk.testing.NeedsRunner;
+import org.apache.beam.sdk.testing.TestPipeline;
+import org.apache.beam.sdk.values.PCollection;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +21,7 @@ import java.util.List;
 import static junit.framework.TestCase.assertEquals;
 
 public class ProtoIOSinkTest {
-    ProtoIO.Sink<Data.RawItem> sink;
+    ProtoIOSink<Data.RawItem> sink;
     PipelineOptions opts;
 
     @Before
@@ -23,10 +29,22 @@ public class ProtoIOSinkTest {
 
 //        sink = ProtoIO.write("/tmp/some-file", "pb.bin",
 //                FileBasedSink.CompressionType.UNCOMPRESSED);
-        ResourceId resource = FileBasedSink.convertToFileResourceIfPossible("/tmp/somefile");
+        ResourceId resource = FileBasedSink.convertToFileResourceIfPossible("somefile");
+        ValueProvider.StaticValueProvider<ResourceId> valueProvider = ValueProvider.StaticValueProvider.of(resource);
         DefaultFilenamePolicy policy = DefaultFilenamePolicy.constructUsingStandardParameters(
-                ValueProvider.StaticValueProvider.of(resource), null, null);
-        sink = new ProtoIO.Sink(ValueProvider.StaticValueProvider.of("/tmp/"), policy);
+                valueProvider, null, null);
+
+        ResourceId tmpDir = FileSystems.matchNewResource("/tmp/proto-io-test", true);
+
+//        "/tmp/";
+        sink = new ProtoIOSink(ValueProvider.StaticValueProvider.of(tmpDir), policy);
+    }
+
+    @Test
+    public void baseTest() {
+        sink.validate(opts);
+
+        ResourceId resourceId = sink.getBaseOutputDirectoryProvider().get();
     }
 
     @Test

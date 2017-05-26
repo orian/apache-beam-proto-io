@@ -21,7 +21,7 @@ public class ProtoIOGzipTest {
     @Before
     public void setUp() {
         source = CompressedSource.from(ProtoIO.source(Data.RawItem.class,
-                "/media/orian/RaidVol1/orian/workspace/HA_dataflow/src/test/java/pl/helloagain/test.pb.gz"));
+                "src/test/java/eu/pawelsz/apache/beam/io/protoio/test.pb.gz"));
     }
 
     @Test
