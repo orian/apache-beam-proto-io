@@ -12,6 +12,7 @@ import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 
 public class ProtoIOSink<T extends Message> extends FileBasedSink<T> implements Serializable {
+
     public ProtoIOSink(ValueProvider<ResourceId> baseOutputDirectoryProvider, FilenamePolicy filenamePolicy) {
         super(baseOutputDirectoryProvider, filenamePolicy);
     }
@@ -23,34 +24,25 @@ public class ProtoIOSink<T extends Message> extends FileBasedSink<T> implements 
 
     @Override
     public WriteOperation<T> createWriteOperation() {
-        return new ProtoIOWriteOperation(this, getBaseOutputDirectoryProvider());
+        return new ProtoIOWriteOperation(this);
     }
 
 
-    public static class ProtoIOWriteOperation<T extends Message> extends FileBasedSink.WriteOperation {
-        public ProtoIOWriteOperation(FileBasedSink<T> sink) {
+    public static class ProtoIOWriteOperation<T extends Message> extends WriteOperation<T> {
+        public ProtoIOWriteOperation(ProtoIOSink<T> sink) {
             super(sink);
         }
 
-        public ProtoIOWriteOperation(FileBasedSink<T> sink, ResourceId tempDirectory) {
-            super(sink, tempDirectory);
-        }
-
-        public ProtoIOWriteOperation(FileBasedSink<T> sink, ValueProvider<ResourceId> tempDirectory) {
-            // TODO make the superclass constructor public!
-            super(sink, tempDirectory.get());
-        }
-
         @Override
-        public FileBasedSink.Writer createWriter() throws Exception {
+        public Writer createWriter() throws Exception {
             return new ProtoIOWriter(this);
         }
     }
 
-    public static class ProtoIOWriter<T extends Message> extends FileBasedSink.Writer<T> {
+    public static class ProtoIOWriter<T extends Message> extends Writer<T> {
         OutputStream outputStream;
 
-        public ProtoIOWriter(FileBasedSink.WriteOperation<T> writeOperation) {
+        public ProtoIOWriter(WriteOperation<T> writeOperation) {
             super(writeOperation, MimeTypes.BINARY);
         }
 
@@ -62,6 +54,12 @@ public class ProtoIOSink<T extends Message> extends FileBasedSink<T> implements 
         @Override
         public void write(T t) throws Exception {
             t.writeDelimitedTo(outputStream);
+        }
+
+        @Override
+        protected void finishWrite() throws Exception {
+            super.finishWrite();
+            outputStream.flush();
         }
     }
 }

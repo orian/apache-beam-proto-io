@@ -15,6 +15,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,7 +37,6 @@ public class ProtoIOSinkTest {
 
         ResourceId tmpDir = FileSystems.matchNewResource("/tmp/proto-io-test", true);
 
-//        "/tmp/";
         sink = new ProtoIOSink(ValueProvider.StaticValueProvider.of(tmpDir), policy);
     }
 
@@ -62,5 +62,8 @@ public class ProtoIOSinkTest {
         List<FileBasedSink.FileResult> results = new ArrayList<FileBasedSink.FileResult>();
         results.add(writer.close());
         wo.finalize(results);
+
+        File f = new File("/tmp/proto-io-test/somefile-00000-of-00001");
+        assertEquals(16, f.length());
     }
 }
