@@ -1,9 +1,9 @@
 package eu.pawelsz.apache.beam.io.protoio;
 
-import com.google.common.io.CountingInputStream;
 import com.google.protobuf.Message;
-import com.google.protobuf.Parser;
-import org.apache.beam.sdk.io.*;
+import org.apache.beam.sdk.io.DefaultFilenamePolicy;
+import org.apache.beam.sdk.io.FileBasedSink;
+import org.apache.beam.sdk.io.WriteFiles;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.transforms.PTransform;
@@ -11,13 +11,6 @@ import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PDone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.io.Serializable;
-import java.lang.reflect.InvocationTargetException;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
-import java.util.NoSuchElementException;
 
 public class ProtoIO {
     private static final Logger LOG = LoggerFactory.getLogger(ProtoIO.class);

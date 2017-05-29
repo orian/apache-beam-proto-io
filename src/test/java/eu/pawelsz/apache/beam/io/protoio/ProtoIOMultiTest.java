@@ -18,12 +18,12 @@ public class ProtoIOMultiTest {
 
     @Before
     public void setUp() {
-        source = ProtoIO.source(Data.RawItem.class, "/media/orian/RaidVol1/orian/workspace/HA_dataflow/src/test/java/pl/helloagain/test*.pb.bin");
+        source = ProtoIO.source(Data.RawItem.class, "src/test/java/eu/pawelsz/apache/beam/io/protoio/test-*.pb.bin");
     }
 
     @Test
     public void testEstimatedSizeBytes() throws Exception {
-        assertEquals(790, source.getEstimatedSizeBytes(opts));
+        assertEquals(780, source.getEstimatedSizeBytes(opts));
     }
 
 //    @Test
