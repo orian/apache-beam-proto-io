@@ -58,7 +58,6 @@ public class ProtoIOSink<T extends Message> extends FileBasedSink<T> implements 
 
         @Override
         protected void finishWrite() throws Exception {
-            super.finishWrite();
             outputStream.flush();
         }
     }
