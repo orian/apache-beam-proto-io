@@ -52,7 +52,8 @@ public class ProtoIO {
 
         return new ProtoIOSink<T>(valueProvider,
                 DefaultFilenamePolicy.constructUsingStandardParameters(
-                        valueProvider, null, extension));
+                        valueProvider, null, extension),
+                factory);
     }
 
     public static <T extends Message> PTransform<PCollection<T>, PDone> write(
