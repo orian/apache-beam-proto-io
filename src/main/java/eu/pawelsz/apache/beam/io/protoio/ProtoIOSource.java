@@ -1,6 +1,7 @@
 package eu.pawelsz.apache.beam.io.protoio;
 
 import com.google.common.io.CountingInputStream;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.Parser;
 import org.apache.beam.sdk.coders.Coder;
@@ -13,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.channels.Channels;
@@ -53,7 +55,7 @@ public class ProtoIOSource<T extends Message> extends FileBasedSource<T> impleme
 
     @Override
     protected FileBasedSource<T> createForSubrangeOfFile(MatchResult.Metadata fileMetadata, long start, long end) {
-        LOG.error("source for subrange for subrange: "+start+" " + end);
+        LOG.error("source for subrange for subrange: " + start + " " + end);
         return new ProtoIOSource<T>(protoMessageClass, fileMetadata, DEFAULT_MIN_BUNDLE_SIZE, start, end);
     }
 
@@ -65,7 +67,7 @@ public class ProtoIOSource<T extends Message> extends FileBasedSource<T> impleme
     @Override
     protected boolean isSplittable() throws Exception {
 //        LOG.info("isSplittable");
-        return getMode()==Mode.FILEPATTERN;
+        return getMode() == Mode.FILEPATTERN;
     }
 
     @Override
@@ -73,13 +75,49 @@ public class ProtoIOSource<T extends Message> extends FileBasedSource<T> impleme
         return ProtoCoder.of(protoMessageClass);
     }
 
+    private interface Wrapper<T> {
+        T parse(InputStream inputStream) throws InvalidProtocolBufferException;
+    }
+
+    private static class ThrowingWrapper<T> implements Wrapper<T> {
+        private final Parser<T> parser_;
+
+        public ThrowingWrapper(Parser<T> p) {
+            this.parser_ = p;
+        }
+
+        public static <T> ThrowingWrapper<T> of(Parser<T> parser) {
+            return new ThrowingWrapper<T>(parser);
+        }
+
+        @Override
+        public T parse(InputStream inputStream) throws InvalidProtocolBufferException {
+            return (T) this.parser_.parseDelimitedFrom(inputStream);
+        }
+    }
+
+    private static class ExceptionCatchingWrapper<T> implements Wrapper<T> {
+        private final Parser<T> parser_;
+
+        public ExceptionCatchingWrapper(Parser<T> p) {
+            this.parser_ = p;
+        }
+
+        public static <T> ThrowingWrapper<T> of(Parser<T> parser) {
+            return new ThrowingWrapper<T>(parser);
+        }
+
+        @Override
+        public T parse(InputStream inputStream) throws InvalidProtocolBufferException {
+            return (T) this.parser_.parseDelimitedFrom(inputStream);
+        }
+    }
+
     static class ProtoReader<T extends Message> extends ProtoIOSource.FileBasedReader<T> {
         private final Class<T> protoMessageClass;
         private T current;
-        private ReadableByteChannel channel;
         private CountingInputStream inputStream;
         private long currentOffset = 0;
-        private boolean realOffset = false;
         private long readNum = 0;
 
         public ProtoReader(ProtoIOSource<T> source, Class<T> protoMessageType) {
@@ -109,7 +147,6 @@ public class ProtoIOSource<T extends Message> extends FileBasedSource<T> impleme
 
         @Override
         protected void startReading(ReadableByteChannel channel) throws IOException {
-            this.channel = channel;
             this.inputStream = new CountingInputStream(Channels.newInputStream(channel));
         }
 
@@ -117,7 +154,11 @@ public class ProtoIOSource<T extends Message> extends FileBasedSource<T> impleme
         protected boolean readNextRecord() throws IOException {
             currentOffset = inputStream.getCount();
             this.readNum++;
-            current = (T) getParser().parseDelimitedFrom(inputStream);
+            try {
+                current = (T) getParser().parseDelimitedFrom(inputStream);
+            } catch (InvalidProtocolBufferException e) {
+                System.err.printf("at msg: %d (offset: %d)", this.readNum, this.currentOffset);
+            }
             return (current != null);
         }
 
