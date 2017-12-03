@@ -1,6 +1,7 @@
 package eu.pawelsz.apache.beam.io.protoio;
 
 import com.google.protobuf.Message;
+import org.apache.beam.sdk.io.Compression;
 import org.apache.beam.sdk.io.FileBasedSink;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.options.ValueProvider;
@@ -11,25 +12,35 @@ import java.io.Serializable;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 
-public class ProtoIOSink<T extends Message> extends FileBasedSink<T> implements Serializable {
+public class ProtoIOSink<DestinationT, T extends Message>
+        extends FileBasedSink
+        implements Serializable {
 
-    public ProtoIOSink(ValueProvider<ResourceId> baseOutputDirectoryProvider, FilenamePolicy filenamePolicy) {
-        super(baseOutputDirectoryProvider, filenamePolicy);
+    public ProtoIOSink(ValueProvider<ResourceId> tempDirectoryProvider,
+                       DynamicDestinations<T, DestinationT, T> dynamicDestinations) {
+        super(tempDirectoryProvider, dynamicDestinations);
     }
 
-    public ProtoIOSink(ValueProvider<ResourceId> baseOutputDirectoryProvider, FilenamePolicy filenamePolicy,
+    public ProtoIOSink(ValueProvider<ResourceId> tempDirectoryProvider,
+                       DynamicDestinations<T, DestinationT, T> dynamicDestinations,
                        WritableByteChannelFactory writableByteChannelFactory) {
-        super(baseOutputDirectoryProvider, filenamePolicy, writableByteChannelFactory);
+        super(tempDirectoryProvider, dynamicDestinations, writableByteChannelFactory);
+    }
+
+    public ProtoIOSink(ValueProvider<ResourceId> tempDirectoryProvider,
+                       DynamicDestinations<T, DestinationT, T> dynamicDestinations,
+                       Compression compression) {
+        super(tempDirectoryProvider, dynamicDestinations, compression);
     }
 
     @Override
-    public WriteOperation<T> createWriteOperation() {
+    public WriteOperation createWriteOperation() {
         return new ProtoIOWriteOperation(this);
     }
 
-
-    public static class ProtoIOWriteOperation<T extends Message> extends WriteOperation<T> {
-        public ProtoIOWriteOperation(ProtoIOSink<T> sink) {
+    public static class ProtoIOWriteOperation<DestinationT, T extends Message>
+            extends WriteOperation<DestinationT, T> {
+        public ProtoIOWriteOperation(ProtoIOSink<DestinationT, T> sink) {
             super(sink);
         }
 
@@ -39,10 +50,10 @@ public class ProtoIOSink<T extends Message> extends FileBasedSink<T> implements 
         }
     }
 
-    public static class ProtoIOWriter<T extends Message> extends Writer<T> {
+    public static class ProtoIOWriter<DestinationT, T extends Message> extends Writer<DestinationT, T> {
         OutputStream outputStream;
 
-        public ProtoIOWriter(WriteOperation<T> writeOperation) {
+        public ProtoIOWriter(WriteOperation<DestinationT, T> writeOperation) {
             super(writeOperation, MimeTypes.BINARY);
         }
 
