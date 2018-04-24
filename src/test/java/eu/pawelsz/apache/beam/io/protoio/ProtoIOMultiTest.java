@@ -5,7 +5,6 @@ import org.apache.beam.sdk.options.PipelineOptions;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.List;
 
 import static junit.framework.TestCase.assertEquals;
@@ -13,7 +12,7 @@ import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 
 public class ProtoIOMultiTest {
-    ProtoIOSource<Data.RawItem> source;
+    ProtoSource<Data.RawItem> source;
     PipelineOptions opts;
 
     @Before
@@ -28,8 +27,8 @@ public class ProtoIOMultiTest {
 
 //    @Test
 //    public void testReadRecords() throws IOException {
-//        ProtoIOSource.ProtoReader<Data.RawItem> reader =
-//                (ProtoIOSource.ProtoReader<Data.RawItem>) source.createReader(opts);
+//        ProtoSource.ProtoReader<Data.RawItem> reader =
+//                (ProtoSource.ProtoReader<Data.RawItem>) source.createReader(opts);
 //        assertTrue("must read 0", reader.start()); // start reading
 //        Data.RawItem itm = reader.getCurrent();
 //        assertEquals(1462100462000000L, itm.getTimestampUsec());
@@ -47,7 +46,8 @@ public class ProtoIOMultiTest {
     @Test
     public void testReadManyFiles() throws Exception {
         final int mul = 2;
-        ProtoIOSource<Data.RawItem> localSource = ProtoIO.source(Data.RawItem.class, "src/test/java/eu/pawelsz/apache/beam/io/protoio/test-*.pb.bin");
+        ProtoSource<Data.RawItem> localSource = ProtoIO.source(Data.RawItem.class,
+                "src/test/java/eu/pawelsz/apache/beam/io/protoio/test-*.pb.bin");
 
         assertEquals(390*mul, localSource.getEstimatedSizeBytes(opts));
 
@@ -56,8 +56,8 @@ public class ProtoIOMultiTest {
 
         for (BoundedSource<Data.RawItem> src : bundles) {
             assertEquals(390, src.getEstimatedSizeBytes(opts));
-            ProtoIOSource.ProtoReader<Data.RawItem> reader =
-                    (ProtoIOSource.ProtoReader<Data.RawItem>) src.createReader(opts);
+            ProtoSource.ProtoReader<Data.RawItem> reader =
+                    (ProtoSource.ProtoReader<Data.RawItem>) src.createReader(opts);
             assertTrue("must read 0", reader.start()); // start reading
             for (int i=1;i<10; i++) {
                 assertTrue("must read "+i, reader.advance());

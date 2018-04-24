@@ -19,34 +19,34 @@ import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.util.NoSuchElementException;
 
-public class ProtoIOSource<T extends Message> extends FileBasedSource<T> implements Serializable {
+public class ProtoSource<T extends Message> extends FileBasedSource<T> implements Serializable {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ProtoIOSource.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ProtoSource.class);
 
     private final Class<T> protoMessageClass;
     private static final int DEFAULT_MIN_BUNDLE_SIZE = 1024;
 
-    public static <T extends Message> ProtoIOSource<T> from(Class<T> recordClass, String fileOrPatternSpec) {
-        return new ProtoIOSource<T>(recordClass, ValueProvider.StaticValueProvider.of(fileOrPatternSpec),
+    public static <T extends Message> ProtoSource<T> from(Class<T> recordClass, String fileOrPatternSpec) {
+        return new ProtoSource<T>(recordClass, ValueProvider.StaticValueProvider.of(fileOrPatternSpec),
                 DEFAULT_MIN_BUNDLE_SIZE);
     }
 
-    public static <T extends Message> ProtoIOSource<T> from(Class<T> recordClass, ValueProvider<String> fileOrPatternSpec) {
-        return new ProtoIOSource<T>(recordClass, fileOrPatternSpec, DEFAULT_MIN_BUNDLE_SIZE);
+    public static <T extends Message> ProtoSource<T> from(Class<T> recordClass, ValueProvider<String> fileOrPatternSpec) {
+        return new ProtoSource<T>(recordClass, fileOrPatternSpec, DEFAULT_MIN_BUNDLE_SIZE);
     }
 
-    private ProtoIOSource(Class<T> recordClass, ValueProvider<String> fileOrPatternSpec) {
+    private ProtoSource(Class<T> recordClass, ValueProvider<String> fileOrPatternSpec) {
         super(fileOrPatternSpec, 1L);
         this.protoMessageClass = recordClass;
     }
 
-    private ProtoIOSource(Class<T> recordClass, ValueProvider<String> fileOrPatternSpec, long minBundleSize) {
+    private ProtoSource(Class<T> recordClass, ValueProvider<String> fileOrPatternSpec, long minBundleSize) {
         super(fileOrPatternSpec, minBundleSize);
         this.protoMessageClass = recordClass;
     }
 
-    private ProtoIOSource(Class<T> recordClass, MatchResult.Metadata fileMetadata, long minBundleSize,
-                          long startOffset, long endOffset) {
+    private ProtoSource(Class<T> recordClass, MatchResult.Metadata fileMetadata, long minBundleSize,
+                        long startOffset, long endOffset) {
         super(fileMetadata, minBundleSize, startOffset, endOffset);
         this.protoMessageClass = recordClass;
     }
@@ -54,7 +54,7 @@ public class ProtoIOSource<T extends Message> extends FileBasedSource<T> impleme
     @Override
     protected FileBasedSource<T> createForSubrangeOfFile(MatchResult.Metadata fileMetadata, long start, long end) {
         LOG.error("source for subrange for subrange: "+start+" " + end);
-        return new ProtoIOSource<T>(protoMessageClass, fileMetadata, DEFAULT_MIN_BUNDLE_SIZE, start, end);
+        return new ProtoSource<T>(protoMessageClass, fileMetadata, DEFAULT_MIN_BUNDLE_SIZE, start, end);
     }
 
     @Override
@@ -73,7 +73,7 @@ public class ProtoIOSource<T extends Message> extends FileBasedSource<T> impleme
         return ProtoCoder.of(protoMessageClass);
     }
 
-    static class ProtoReader<T extends Message> extends ProtoIOSource.FileBasedReader<T> {
+    static class ProtoReader<T extends Message> extends ProtoSource.FileBasedReader<T> {
         private final Class<T> protoMessageClass;
         private T current;
         private ReadableByteChannel channel;
@@ -82,7 +82,7 @@ public class ProtoIOSource<T extends Message> extends FileBasedSource<T> impleme
         private boolean realOffset = false;
         private long readNum = 0;
 
-        public ProtoReader(ProtoIOSource<T> source, Class<T> protoMessageType) {
+        public ProtoReader(ProtoSource<T> source, Class<T> protoMessageType) {
             super(source);
             this.protoMessageClass = protoMessageType;
         }

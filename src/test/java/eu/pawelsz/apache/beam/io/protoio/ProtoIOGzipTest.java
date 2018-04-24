@@ -1,14 +1,16 @@
 package eu.pawelsz.apache.beam.io.protoio;
 
+import com.google.protobuf.ByteString;
 import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.io.CompressedSource;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.util.SerializableUtils;
 import org.junit.Before;
 import org.junit.Test;
-import eu.pawelsz.apache.beam.io.protoio.Data;
 
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
@@ -29,27 +31,44 @@ public class ProtoIOGzipTest {
         assertEquals(199, source.getEstimatedSizeBytes(opts));
     }
 
+    public static List<Data.RawItem> ALL = create();
+
+    public static Data.RawItem RAW0 = Data.RawItem.newBuilder()
+            .setTimestampUsec(1462100462000000L)
+            .setDeviceName("device-0")
+            .setMacAddress(ByteString.copyFromUtf8("\020\020\020\020\020\000"))
+            .setSignalStrength(-30).build();
+
+    private static List<Data.RawItem> create() {
+        Data.RawItem rec = Data.RawItem.newBuilder()
+                .setTimestampUsec(1462100462000000L)
+                .setDeviceName("device-0")
+                .setMacAddress(ByteString.copyFromUtf8("\020\020\020\020\020\000"))
+                .setSignalStrength(-30).build();
+
+        LinkedList<Data.RawItem> all = new LinkedList<>();
+        for (int i = 0; i < 10; i++) {
+            byte[] mac = rec.getMacAddress().toByteArray();
+            mac[5] = (byte) i;
+            all.add(rec.toBuilder()
+                    .setTimestampUsec(rec.getTimestampUsec() + i * 3600000000L)
+                    .setDeviceName("device-" + i).setSignalStrength(-30 - i)
+                    .setMacAddress(ByteString.copyFrom(mac)).build());
+        }
+        return all;
+    }
+
     @Test
     public void testReadRecords() throws IOException {
         BoundedSource.BoundedReader<Data.RawItem> reader =
                 (BoundedSource.BoundedReader<Data.RawItem>) source.createReader(opts);
         assertTrue("must read 0", reader.start()); // start reading
-        Data.RawItem itm = reader.getCurrent();
-        assertEquals(1462100462000000L, itm.getTimestampUsec());
-        assertEquals("device-0", itm.getDeviceName());
-        assertEquals(-30, itm.getSignalStrength());
-        assertTrue(itm.hasMacAddress());
-
-        for (int i = 1; i < 10; i++) {
+        for (int i = 0; i < 9; i++) {
+            assertEquals(ALL.get(i), reader.getCurrent());
             assertTrue("must read " + i, reader.advance());
         }
 
-        itm = reader.getCurrent();
-        assertEquals(1462132862000000L, itm.getTimestampUsec());
-        assertEquals("device-9", itm.getDeviceName());
-        assertEquals(-39, itm.getSignalStrength());
-        assertTrue(itm.hasMacAddress());
-
+        assertEquals(ALL.get(9), reader.getCurrent());
         assertFalse("no more records", reader.advance());
         reader.close();
     }

@@ -1,20 +1,30 @@
 package eu.pawelsz.apache.beam.io.protoio;
 
+import com.google.protobuf.ByteString;
 import org.apache.beam.sdk.io.FileBasedSource;
 import org.apache.beam.sdk.options.PipelineOptions;
+import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.util.SerializableUtils;
+import org.apache.beam.sdk.values.PCollection;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.util.List;
 
+import static eu.pawelsz.apache.beam.io.protoio.ProtoIOGzipTest.ALL;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 
 public class ProtoIOSourceTest {
-    ProtoIOSource<Data.RawItem> source;
+    ProtoSource<Data.RawItem> source;
     PipelineOptions opts;
+
+    @Rule public TemporaryFolder tempFolder = new TemporaryFolder();
+    @Rule public TestPipeline p = TestPipeline.create();
+
 
     static String testFilePath = "src/test/java/eu/pawelsz/apache/beam/io/protoio/test.pb.bin";
 
@@ -32,18 +42,16 @@ public class ProtoIOSourceTest {
     public void testReadRecords() throws Exception {
         List<? extends FileBasedSource<Data.RawItem>> split = source.split(100000, opts);
         assertEquals(1, split.size());
-        source = (ProtoIOSource<Data.RawItem>) split.get(0);
-        ProtoIOSource.ProtoReader<Data.RawItem> reader = (ProtoIOSource.ProtoReader<Data.RawItem>) source.createSingleFileReader(opts);
+        source = (ProtoSource<Data.RawItem>) split.get(0);
+        ProtoSource.ProtoReader<Data.RawItem> reader =
+                (ProtoSource.ProtoReader<Data.RawItem>) source.createSingleFileReader(opts);
         assertTrue("must read 0", reader.start()); // start reading
-        Data.RawItem itm = reader.getCurrent();
-        assertEquals(1462100462000000L, itm.getTimestampUsec());
-        assertEquals("device-0", itm.getDeviceName());
-        assertEquals(-30, itm.getSignalStrength());
-        assertTrue(itm.hasMacAddress());
-
-        for (int i=1;i<10;i++) {
-            assertTrue("must read "+i, reader.advance());
+        for (int i = 0; i < 9; i++) {
+            assertEquals(ALL.get(i), reader.getCurrent());
+            assertTrue("must read " + i, reader.advance());
         }
+
+        assertEquals(ALL.get(9), reader.getCurrent());
         assertFalse(reader.advance());
         reader.close();
     }
