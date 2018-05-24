@@ -25,7 +25,6 @@ import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.apache.beam.sdk.io.AvroIO.constantDestinations;
 
 public class ProtoIO {
     private static final Logger LOG = LoggerFactory.getLogger(ProtoIO.class);
@@ -271,14 +270,7 @@ public class ProtoIO {
             checkNotNull(getRecordClass(), "recordClass");
 
 //            if (getMatchConfiguration().getWatchInterval() == null && !getHintMatchesManyFiles()) {
-                return input.apply(
-                        "Read",
-                        org.apache.beam.sdk.io.Read.from(
-                                createSource(
-                                        getFilepattern(),
-                                        /*getMatchConfiguration().getEmptyMatchTreatment()*/
-                                        EmptyMatchTreatment.DISALLOW,
-                                        getRecordClass())));
+                return input.apply("Read", org.apache.beam.sdk.io.Read.from(getSource()));
 //            }
 //            ReadAll<T> ra = readAll(getRecordClass())
 //                    .withCompression(getCompression())
@@ -311,11 +303,22 @@ public class ProtoIO {
         }
 
         @SuppressWarnings("unchecked")
-        private static <T extends Message> ProtoSource<T> createSource(
+        private FileBasedSource<T> getSource() {
+            return createSource(getFilepattern(),
+                    /*getMatchConfiguration().getEmptyMatchTreatment()*/
+                    EmptyMatchTreatment.DISALLOW,
+                    getRecordClass(),
+                    getCompression());
+        }
+
+        @SuppressWarnings("unchecked")
+        private static <T extends Message> FileBasedSource<T> createSource(
                 ValueProvider<String> filepattern,
                 EmptyMatchTreatment emptyMatchTreatment,
-                Class<T> recordClass) {
-            return ProtoSource.from(recordClass, filepattern);
+                Class<T> recordClass,
+                Compression compression) {
+            return CompressedSource.from(ProtoSource.from(recordClass, filepattern))
+                    .withCompression(compression);
         }
     }
 
@@ -403,10 +406,8 @@ public class ProtoIO {
 
         @Override
         public FileBasedSource<T> apply(String input) {
-            return Read.createSource(
-                    ValueProvider.StaticValueProvider.of(input),
-                    EmptyMatchTreatment.DISALLOW,
-                    recordClass);
+            return Read.createSource(ValueProvider.StaticValueProvider.of(input),
+                    EmptyMatchTreatment.DISALLOW, this.recordClass, Compression.AUTO);
         }
     }
 

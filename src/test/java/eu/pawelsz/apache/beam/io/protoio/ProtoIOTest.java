@@ -44,4 +44,14 @@ public class ProtoIOTest {
 //        PAssert.that(input).containsInAnyOrder(ALL);
         pipeline.run().waitUntilFinish();
     }
+
+    @Test
+    @Category(NeedsRunner.class)
+    public void testRead() {
+        PCollection<Data.RawItem> input = pipeline.apply(
+                ProtoIO.read(Data.RawItem.class).withCompression(Compression.GZIP)
+                        .from("src/test/java/eu/pawelsz/apache/beam/io/protoio/test.pb.gz"));
+        PAssert.that(input).containsInAnyOrder(ALL);
+        pipeline.run().waitUntilFinish();
+    }
 }
