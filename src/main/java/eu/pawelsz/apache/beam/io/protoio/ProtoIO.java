@@ -221,7 +221,7 @@ public class ProtoIO {
 //        }
 
         /** Sets the {@link FileIO.MatchConfiguration}. */
-        public ProtoIO.Read withMatchConfiguration(FileIO.MatchConfiguration matchConfiguration) {
+        public ProtoIO.Read<T> withMatchConfiguration(FileIO.MatchConfiguration matchConfiguration) {
             return toBuilder().setMatchConfiguration(matchConfiguration).build();
         }
 
@@ -236,7 +236,7 @@ public class ProtoIO {
          *
          * <p>If no compression type is specified, the default is {@link Compression#AUTO}.
          */
-        public ProtoIO.Read withCompression(Compression compression) {
+        public ProtoIO.Read<T> withCompression(Compression compression) {
             return toBuilder().setCompression(compression).build();
         }
 
@@ -246,7 +246,7 @@ public class ProtoIO {
          * <p>This works only in runners supporting {@link Experimental.Kind#SPLITTABLE_DO_FN}.
          */
         @Experimental(Experimental.Kind.SPLITTABLE_DO_FN)
-        public ProtoIO.Read watchForNewFiles(
+        public ProtoIO.Read<T> watchForNewFiles(
                 Duration pollInterval, Watch.Growth.TerminationCondition<String, ?> terminationCondition) {
             return withMatchConfiguration(
                     getMatchConfiguration().continuously(pollInterval, terminationCondition));
@@ -261,7 +261,7 @@ public class ProtoIO {
          * a small number of files (e.g., in a runner that supports dynamic work rebalancing, it will
          * happen less efficiently within individual files).
          */
-        public ProtoIO.Read withHintMatchesManyFiles() {
+        public ProtoIO.Read<T> withHintMatchesManyFiles() {
             return toBuilder().setHintMatchesManyFiles(true).build();
         }
 
